@@ -48,7 +48,7 @@ function main() {
     const res = stageShot(shotName, world, seed);
     currentState = res.screen;
     if (res.hasSave) hasSave = true;
-    // Render once and set shot-ready
+    // Render once with snapCamera and set shot-ready
     renderer.render(world, currentState, { hasSave, snapCamera: true });
     document.title = 'shot-ready';
     return;

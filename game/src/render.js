@@ -45,7 +45,7 @@ export function createRenderer(canvas) {
       return;
     }
 
-    // Camera follow player with smooth lerp
+    // Camera follow player with smooth lerp or snap
     const targetCamX = world.player.car ? world.player.car.x : world.player.x;
     const targetCamY = world.player.car ? world.player.car.y : world.player.y;
     if (options.snapCamera) {

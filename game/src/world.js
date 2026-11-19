@@ -21,11 +21,17 @@ export function districtAt(world, x, y) {
 }
 
 export function isRoad(world, x, y) {
-  if (y >= WORLD.waterY) {
-    return x >= 1520 && x <= 1680;
+  let px = x;
+  let py = y;
+  if (typeof world === 'number' && typeof x === 'number') {
+    py = x;
+    px = world;
   }
-  const rx = Math.abs((x + 180) % 360 - 180);
-  const ry = Math.abs((y + 180) % 360 - 180);
+  if (py >= WORLD.waterY) {
+    return px >= 1520 && px <= 1680;
+  }
+  const rx = Math.abs((px + 180) % 360 - 180);
+  const ry = Math.abs((py + 180) % 360 - 180);
   return rx <= WORLD.roadWidth / 2 || ry <= WORLD.roadWidth / 2;
 }
 
@@ -95,16 +101,27 @@ export function createWorld(seedOrRandom) {
     }
   }
 
+  // Helper for road spawning with up to 40 retries and fallback
+  function getRoadSpawn() {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const rx = rng.range(200, WORLD.width - 200);
+      const ry = rng.range(200, WORLD.waterY - 200);
+      if (isRoad(null, rx, ry)) {
+        return { x: rx, y: ry };
+      }
+    }
+    return { x: 1600, y: 1600 };
+  }
+
   // Spawn Parked Cars (~18) along curbs
   const carClasses = Object.keys(VEHICLE_CLASSES);
   for (let i = 0; i < 18; i++) {
-    const rx = rng.range(200, WORLD.width - 200);
-    const ry = rng.range(200, WORLD.waterY - 200);
+    const pos = getRoadSpawn();
     const classKey = rng.pick(carClasses);
     const conf = VEHICLE_CLASSES[classKey];
     cars.push({
-      x: rx,
-      y: ry,
+      x: pos.x,
+      y: pos.y,
       angle: rng.range(0, Math.PI * 2),
       speed: 0,
       classKey,
@@ -114,15 +131,14 @@ export function createWorld(seedOrRandom) {
     });
   }
 
-  // Spawn Traffic Cars (~14) on roads
-  for (let i = 0; i < 14; i++) {
-    const rx = rng.range(200, WORLD.width - 200);
-    const ry = rng.range(200, WORLD.waterY - 200);
+  // Spawn Traffic Cars (~16) on roads
+  for (let i = 0; i < 16; i++) {
+    const pos = getRoadSpawn();
     const classKey = rng.pick(carClasses);
     const conf = VEHICLE_CLASSES[classKey];
     cars.push({
-      x: rx,
-      y: ry,
+      x: pos.x,
+      y: pos.y,
       angle: rng.pick([0, Math.PI / 2, Math.PI, Math.PI * 1.5]),
       speed: rng.range(100, 250),
       classKey,
@@ -132,11 +148,12 @@ export function createWorld(seedOrRandom) {
     });
   }
 
-  // Spawn Pedestrians (~40)
-  for (let i = 0; i < 40; i++) {
+  // Spawn Pedestrians (~44) on roads/sidewalks
+  for (let i = 0; i < 44; i++) {
+    const pos = getRoadSpawn();
     pedestrians.push({
-      x: rng.range(100, WORLD.width - 100),
-      y: rng.range(100, WORLD.waterY - 100),
+      x: pos.x,
+      y: pos.y,
       angle: rng.range(0, Math.PI * 2),
       speed: rng.range(30, 60),
       color: rng.pick(['#ffcc00', '#3366ff', '#ff3366', '#33cc66', '#cc33ff']),
